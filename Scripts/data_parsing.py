@@ -1,8 +1,12 @@
 # Import packages:
+import re
 import json
 import pandas as pd
 from prefect import task, flow
 from Scripts.modelParams import ModelParams as Const
+import nltk
+from nltk.corpus import stopwords
+nltk.download("stopwords")
 
 @task
 def load_json_data(path : str) -> dict:
@@ -26,6 +30,11 @@ def parse_json_data_to_dataframe(data : dict) -> pd.DataFrame:
 def load_data_flow():
     data_dict = load_json_data(Const.data_path)
     reviews_df = parse_json_data_to_dataframe(data_dict)
+
+
+def remove_punctuation(review_str : str) -> str:
+    no_punct_str = re.sub('[^a-zA-Z]', ' ', review_str)
+    return no_punct_str
 
 
 if __name__ == "__main__":
