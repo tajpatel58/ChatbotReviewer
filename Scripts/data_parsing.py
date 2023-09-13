@@ -39,8 +39,8 @@ def remove_punctuation(review_str : str) -> str:
 
 def remove_stop_words(review_str : str) -> list:
     english_stop_words = set(stopwords.words("english"))
-    review_list = review_str.split(" ")
-    no_stop_words = [word.lower().strip() for word in review_list if (word not in english_stop_words and word != " ")]
+    review_list = re.findall(r'\S+', review_str)
+    no_stop_words = [word.lower() for word in review_list if (word not in english_stop_words)]
     return no_stop_words
 
 
