@@ -37,6 +37,14 @@ def remove_punctuation(review_str : str) -> str:
     return no_punct_str
 
 
+def remove_stop_words(review_str : str) -> list:
+    english_stop_words = set(stopwords.words("english"))
+    review_list = review_str.split(" ")
+    no_stop_words = [word.lower().strip() for word in review_list if (word not in english_stop_words and word != " ")]
+    return no_stop_words
+
+
+
 if __name__ == "__main__":
     load_data_flow()
     
