@@ -6,7 +6,8 @@ from prefect import task, flow
 from Scripts.modelParams import ModelParams as Const
 import nltk
 from nltk.corpus import stopwords
-nltk.download("stopwords")
+import spacy
+#nltk.download("stopwords")
 
 @task
 def load_json_data(path : str) -> dict:
@@ -41,9 +42,12 @@ def remove_stop_words(review_str : str) -> list:
     english_stop_words = set(stopwords.words("english"))
     review_list = re.findall(r'\S+', review_str)
     no_stop_words = [word.lower() for word in review_list if (word not in english_stop_words)]
-    return no_stop_words
+    no_stop_words_str = " ".join(no_stop_words)
+    return no_stop_words_str
 
 
+def vectorize(review_str : str, nlp_vec):
+    return nlp_vec(review_str)
 
 if __name__ == "__main__":
     load_data_flow()
