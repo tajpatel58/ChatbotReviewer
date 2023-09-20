@@ -7,4 +7,6 @@ class ModelParams(object):
 
     REVIEW = "Review"
     LABEL_RAW = "Sentiment"
-    REVIEW_NO_PUNCTUATION = "Reviews_No_Punctuation"
+    REVIEW_WORDS = "Only_Words"
+    REVIEW_NO_STOP_WORDS = "Review_No_Stopwords"
+    BINARY_LABEL = "Binary_Sentiment"

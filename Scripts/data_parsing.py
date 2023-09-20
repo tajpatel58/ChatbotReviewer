@@ -1,4 +1,5 @@
-# Import packages:
+# Import packages
+import os
 import re
 import json
 import pandas as pd
@@ -8,6 +9,7 @@ import nltk
 from nltk.corpus import stopwords
 import spacy
 #nltk.download("stopwords")
+
 
 @task
 def load_json_data(path : str) -> dict:
@@ -27,15 +29,13 @@ def parse_json_data_to_dataframe(data : dict) -> pd.DataFrame:
     return parsed_df
 
 
-@flow
-def load_data_flow():
-    data_dict = load_json_data(Const.data_path)
-    reviews_df = parse_json_data_to_dataframe(data_dict)
-
-
 def remove_punctuation(review_str : str) -> str:
     no_punct_str = re.sub('[^a-zA-Z]', ' ', review_str)
     return no_punct_str
+
+
+def gen_embedding(review_str : str, nlp_lang):
+    return nlp_lang(review_str).vector
 
 
 def remove_stop_words(review_str : str) -> list:
@@ -46,9 +46,42 @@ def remove_stop_words(review_str : str) -> list:
     return no_stop_words_str
 
 
-def vectorize(review_str : str, nlp_vec):
-    return nlp_vec(review_str)
+@flow
+def clean_reviews(reviews_df):
+    reviews_df[Const.REVIEW_WORDS] = reviews_df[Const.REVIEW].apply(remove_punctuation)
+    reviews_df[Const.REVIEW_NO_STOP_WORDS] = reviews_df[Const.REVIEW_WORDS].apply(remove_stop_words)
+    label_mapping = {"positive_reviews" : 1, "negative_reviews" : 0, "neutral/constructive_reviews" : 0}
+    reviews_df[Const.BINARY_LABEL] = reviews_df[Const.LABEL_RAW].replace(label_mapping)
+    return reviews_df
+
+
+@flow
+def load_data_into_df(reviews_path : str):
+    data_dict = load_json_data(reviews_path)
+    reviews_df = parse_json_data_to_dataframe(data_dict)
+    return reviews_df
+
+
+@flow
+def create_word_embeddings_mat(cleaned_reviews_df):
+    nlp = spacy.load("en_core_web_md")
+    embeddings_mat = pd.DataFrame(cleaned_reviews_df.apply
+                              (lambda row : nlp(row[Const.REVIEW_NO_STOP_WORDS]), 
+                               axis=1).tolist())
+
+    embeddings_mat[Const.BINARY_LABEL] = cleaned_reviews_df[Const.BINARY_LABEL].to_numpy()
+    return embeddings_mat
+
+
+@flow
+def data_parsing_flow(reviews_path : str):
+    reviews_df = load_data_into_df(reviews_path)
+    cleaned_df = clean_reviews(reviews_df)
+    embeddings_mat = create_word_embeddings_mat(cleaned_df)
+
 
 if __name__ == "__main__":
-    load_data_flow()
+    data_home = "/Users/tajsmac/Documents/Sentiment-Analysis/data"
+    reviews_path = os.path.join(data_home, "reviews.json")
+    data_parsing_flow(reviews_path)
     
