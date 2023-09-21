@@ -78,6 +78,7 @@ def data_parsing_flow(reviews_path : str):
     reviews_df = load_data_into_df(reviews_path)
     cleaned_df = clean_reviews(reviews_df)
     embeddings_mat = create_word_embeddings_mat(cleaned_df)
+    return embeddings_mat
 
 
 if __name__ == "__main__":
