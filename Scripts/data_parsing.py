@@ -66,7 +66,7 @@ def load_data_into_df(reviews_path : str):
 def create_word_embeddings_mat(cleaned_reviews_df):
     nlp = spacy.load("en_core_web_md")
     embeddings_mat = pd.DataFrame(cleaned_reviews_df.apply
-                              (lambda row : nlp(row[Const.REVIEW_NO_STOP_WORDS]), 
+                              (lambda row : nlp(row[Const.REVIEW_NO_STOP_WORDS]).vector, 
                                axis=1).tolist())
 
     embeddings_mat[Const.BINARY_LABEL] = cleaned_reviews_df[Const.BINARY_LABEL].to_numpy()
