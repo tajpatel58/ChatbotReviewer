@@ -12,7 +12,7 @@ def pca_reduce_task(X: pd.DataFrame, n_comp: int):
 
 
 @task
-def create_word_embeddings_mat_task(cleaned_reviews_df: pd.DatFrame) -> pd.DataFrame:
+def create_word_embeddings_mat_task(cleaned_reviews_df: pd.DataFrame) -> pd.DataFrame:
     nlp = spacy.load("en_core_web_md")
     embeddings_mat = cleaned_reviews_df[Const.REVIEW_NO_STOP_WORDS].apply(
         lambda x: nlp(x).vector
@@ -23,7 +23,7 @@ def create_word_embeddings_mat_task(cleaned_reviews_df: pd.DatFrame) -> pd.DataF
     return embeddings_mat
 
 
-@flow
+@flow(validate_parameters=False)
 def feature_engineering_flow(cleaned_reviews_df: pd.DataFrame) -> pd.DataFrame:
     word_embeddings = create_word_embeddings_mat_task(cleaned_reviews_df)
     feature_matrix = pca_reduce_task(word_embeddings)

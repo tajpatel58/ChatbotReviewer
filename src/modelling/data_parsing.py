@@ -25,7 +25,7 @@ def parse_json_data_to_dataframe(data_dict: dict) -> pd.DataFrame:
     return parsed_df
 
 
-@flow()
+@flow(log_prints=True)
 def load_data_flow(reviews_path: Path) -> pd.DataFrame:
     """
     Flow to load in training data (reviews data) from a json file. Json file should be only 1 key, 1 value layout.
@@ -35,4 +35,6 @@ def load_data_flow(reviews_path: Path) -> pd.DataFrame:
     """
     data_dict = load_json_data(reviews_path)
     reviews_df = parse_json_data_to_dataframe(data_dict)
+    print("Top 5 Rows Raw Data:")
+    print(reviews_df.head())
     return reviews_df
