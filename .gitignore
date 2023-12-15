@@ -156,3 +156,4 @@ data/
 Exploration/mlruns
 
 .DS_Store
+/notebooks/mlruns

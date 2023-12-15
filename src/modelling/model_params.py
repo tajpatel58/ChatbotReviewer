@@ -9,5 +9,5 @@ class ModelParams(object):
     REVIEW = "review"
     LABEL_RAW = "sentiment"
     REVIEW_WORDS = "only_words"
-    REVIEW_NO_STOP_WORDS = "review_no_stopwords"
+    REVIEW_NO_STOP_WORDS = "review_no_stopwords_str"
     BINARY_LABEL = "binary_sentiment"
