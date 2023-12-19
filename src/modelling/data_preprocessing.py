@@ -36,10 +36,22 @@ def remove_stop_words_task(reviews_df: pd.DataFrame) -> pd.DataFrame:
     return reviews_df
 
 
+@task
+def transform_classes_to_binary(reviews_df: pd.DataFrame) -> pd.DataFrame:
+    label_to_bin_dict = {
+        "positive_reviews": 1,
+        "negative_reviews": 0,
+        "neutral/constructive": 0,
+    }
+    reviews_df[Const.BINARY_LABEL] = reviews_df[Const.LABEL_RAW].map(label_to_bin_dict)
+    return reviews_df
+
+
 @flow(validate_parameters=False, log_prints=True)
 def data_preprocessing_flow(raw_reviews_df: pd.DataFrame) -> pd.DataFrame:
     no_punctuation_df = remove_punctuation_task(raw_reviews_df)
     cleaned_df = remove_stop_words_task(no_punctuation_df)
+    cleaned_with_binary_label_df = transform_classes_to_binary(cleaned_df)
     print("Top 5 Rows of Cleaned/Processed DF:")
-    print(cleaned_df.head())
-    return cleaned_df
+    print(cleaned_with_binary_label_df.head())
+    return cleaned_with_binary_label_df
