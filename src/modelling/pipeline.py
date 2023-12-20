@@ -6,7 +6,10 @@ from src.modelling.feature_engineering import feature_engineering_flow
 
 data_home = Path("/Users/tajsmac/Documents/Sentiment-Analysis/")
 json_reviews_path = data_home / "data" / "reviews.json"
+number_of_components = 40
 
 raw_reviews_data = load_data_flow(json_reviews_path)
 processed_data = data_preprocessing_flow(raw_reviews_data)
-feature_matrix = feature_engineering_flow(processed_data)
+feature_matrix = feature_engineering_flow(
+    processed_data, inference=False, n_components=number_of_components
+)
