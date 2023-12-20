@@ -39,8 +39,8 @@ def remove_stop_words_task(reviews_df: pd.DataFrame) -> pd.DataFrame:
 @task
 def transform_classes_to_binary(reviews_df: pd.DataFrame) -> pd.DataFrame:
     label_to_bin_dict = {
-        "positive_reviews": 1,
-        "negative_reviews": 0,
+        "positive": 1,
+        "negative": 0,
         "neutral/constructive": 0,
     }
     reviews_df[Const.BINARY_LABEL] = reviews_df[Const.LABEL_RAW].map(label_to_bin_dict)
