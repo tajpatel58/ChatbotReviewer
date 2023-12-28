@@ -104,7 +104,7 @@ def pickle_objects_task(
     return None
 
 
-@task
+@task(log_prints=True)
 def transforming_labels_task(labels: pd.Series, label_encoder: LabelEncoder):
     """
     Groups "neutral/constructive" reviews as "negative" to turn problem into binary classification.
@@ -122,9 +122,14 @@ def transforming_labels_task(labels: pd.Series, label_encoder: LabelEncoder):
     """
     # group neutral reviews as negative:
     replace_dict = {"neutral/constructive": "negative"}
-    replaced_labels = labels.map(replace_dict)
+    replaced_labels = labels.replace(replace_dict)
     # transform labels:
     mapped_labels = label_encoder.fit_transform(replaced_labels)
+    label_encoder_dict = dict(
+        zip(label_encoder.classes_, label_encoder.transform(label_encoder.classes_))
+    )
+    print("Label Encoder Mapping is:")
+    print(label_encoder_dict)
     return mapped_labels
 
 
@@ -173,7 +178,7 @@ def feature_engineering_training_flow(
 
     pickle_objects_task(
         path_to_pickle=path_to_pickle,
-        preprocessing_objects=preprocessing_dict,
+        objs=preprocessing_dict,
         log_msg="pickled datapreprocessing objects",
     )
 
