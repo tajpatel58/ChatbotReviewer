@@ -10,6 +10,16 @@ from src.modelling.model_params import ModelParams as Const
 
 
 @task(log_prints=True)
+def initialise_feature_engineering_dict(n_components: int) -> dict:
+    # initialise preprocessing objects:
+    print("Initialising feature engineering objects")
+    pca = PCA(n_components=n_components, random_state=42)
+    label_encoder = LabelEncoder()
+    feature_engineering_dict = {"pca": pca, "label_encoder": label_encoder}
+    return feature_engineering_dict
+
+
+@task(log_prints=True)
 def create_word_embeddings_mat_task(
     cleaned_reviews_df: pd.DataFrame, col_name: str
 ) -> pd.DataFrame:
@@ -59,7 +69,7 @@ def pca_reduce_task(X: pd.DataFrame, pca: PCA, training: bool = True) -> None:
 
 
 @task(log_prints=True)
-def load_pickled_objects_task(path_to_pickle: Path, log_msg: str) -> None:
+def load_pickled_objects_task(path_to_pickle: Path, log_msg: str) -> dict:
     """
     Parameters:
     -----------
@@ -158,9 +168,11 @@ def feature_engineering_training_flow(
     labels (np.array) : Transformed training data labels.
 
     """
-    # initialise preprocessing objects:
-    pca = PCA(n_components=n_components, random_state=42)
-    label_encoder = LabelEncoder()
+    feature_engineering_dict = initialise_feature_engineering_dict(
+        n_components=n_components
+    )
+    pca = feature_engineering_dict["pca"]
+    label_encoder = feature_engineering_dict["label_encoder"]
 
     # create word embeddings
     word_embeddings = create_word_embeddings_mat_task(
@@ -173,13 +185,10 @@ def feature_engineering_training_flow(
         cleaned_reviews_df[Const.LABEL_RAW], label_encoder=label_encoder
     )
 
-    # save preprocessing components
-    preprocessing_dict = {"pca": pca, "label_encoder": label_encoder}
-
     pickle_objects_task(
         path_to_pickle=path_to_pickle,
-        objs=preprocessing_dict,
-        log_msg="pickled datapreprocessing objects",
+        objs=feature_engineering_dict,
+        log_msg="pickled feature engineering objects",
     )
 
     print("Top 5 rows and last 5 columns of feature matrix:")
@@ -209,14 +218,14 @@ def feature_engineering_inference_flow(
     pca_reduced_matrix (np.array) : Array of projected inference data.
 
     """
-    # load pickle file with preprocessing objects:
-    preprocessing_dict = load_pickled_objects_task(
+    # load pickle file with fitted feature_engineering objects:
+    feature_engineering_dict = load_pickled_objects_task(
         path_to_pickle=path_to_pickle,
         log_msg="loading pickled dictionary of preprocessing objects",
     )
 
     # set preprocessng items:
-    pca = preprocessing_dict["pca"]
+    pca = feature_engineering_dict["pca"]
 
     # create word embeddings
     word_embeddings = create_word_embeddings_mat_task(
