@@ -1,21 +1,25 @@
 import mlflow
 import numpy as np
-from prefect import task
+from pathlib import Path
+from prefect import task, flow
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
-from sklearn.tree import ExtraTreesClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
 
 
-@task
-def configure_mlflow():
-    pass
+@task(name="Configuring MlFlow")
+def configure_mlflow_task(project_home: Path) -> None:
+    experiment_tracking_path = (
+        project_home / "src" / "modelling" / "experiment_tracking"
+    )
+    mlflow.set_tracking_uri("sqlite:///" + str(experiment_tracking_path / "mlflow.db"))
+    return None
 
 
-@task
-def initialise_model_dicts(random_state: int) -> list:
+@task(name="Initialising Hyperparam Search Info")
+def initialise_model_dicts_task(random_state: int) -> list:
     # logistic regression hyperparams search space
     log_reg_params = {
         "penalty": ["l1", "l2"],
@@ -39,7 +43,7 @@ def initialise_model_dicts(random_state: int) -> list:
         "random_state": [random_state],
     }
 
-    log_reg_model = LogisticRegression()
+    log_reg_model = LogisticRegression(solver="liblinear")
     svm_model = SVC()
     rf_model = RandomForestClassifier()
     et_model = ExtraTreesClassifier()
@@ -63,7 +67,7 @@ def initialise_model_dicts(random_state: int) -> list:
     return model_dicts
 
 
-@task
+@task(name="Splitting Dataset to Train/Test")
 def split_data_task(X: np.array, y: np.array, train_size: float):
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, train_size=train_size, stratify=y
@@ -74,8 +78,8 @@ def split_data_task(X: np.array, y: np.array, train_size: float):
 @task
 def hyperparam_tune_and_train_task(
     X_train: np.array,
-    y_train: np.array,
     X_test: np.array,
+    y_train: np.array,
     y_test: np.array,
     model_info_dict: dict,
     cv: int,
@@ -102,5 +106,25 @@ def hyperparam_tune_and_train_task(
         mlflow.log_metric(key="accuracy", value=accuracy)
         mlflow.log_param(key="grid_searched_params", value=model_grid_search_dict)
         mlflow.log_params(best_hyper_params)
-        mlflow.sklearn.log_model(best_estimator)
+        mlflow.sklearn.log_model(best_estimator, model_name)
+    return None
+
+
+@flow(validate_parameters=False, log_prints=True)
+def training_models_flow(
+    X: np.ndarray,
+    y: np.ndarray,
+    random_state: int,
+    train_size: float,
+    cv: int,
+    project_home: Path,
+):
+    configure_mlflow_task(project_home)
+    X_train, X_test, y_train, y_test = split_data_task(X, y, train_size)
+    model_dicts = initialise_model_dicts_task(random_state=random_state)
+    for model_dict in model_dicts:
+        training_task_name = f"Training Model: {model_dict['name']}"
+        hyperparam_tune_and_train_task.with_options(name=training_task_name)(
+            X_train, X_test, y_train, y_test, model_info_dict=model_dict, cv=cv
+        )
     return None
