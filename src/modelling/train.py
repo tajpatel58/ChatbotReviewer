@@ -1,7 +1,11 @@
 import mlflow
 import numpy as np
 from prefect import task
+from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
+from sklearn.tree import ExtraTreesClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
 
 
@@ -11,8 +15,52 @@ def configure_mlflow():
 
 
 @task
-def initialise_model_dict():
-    pass
+def initialise_model_dicts(random_state: int) -> list:
+    # logistic regression hyperparams search space
+    log_reg_params = {
+        "penalty": ["l1", "l2"],
+        "C": [0.001, 0.01, 0.1, 1, 10, 100, 1000],
+    }
+    # svm hyperparams search space
+    svc_params = {
+        "C": [0.5, 0.7, 0.9, 1],
+        "kernel": ["rbf", "poly", "sigmoid", "linear"],
+    }
+    # random forest hyperparams search space:
+    rf_params = {
+        "max_depth": list(range(2, 7, 1)),
+        "min_samples_leaf": list(range(2, 7, 1)),
+        "random_state": [random_state],
+    }
+    # extra trees hyperparams search space:
+    et_params = {
+        "n_estimators": list(range(100, 500, 50)),
+        "max_features": [10, "sqrt", "log2"],
+        "random_state": [random_state],
+    }
+
+    log_reg_model = LogisticRegression()
+    svm_model = SVC()
+    rf_model = RandomForestClassifier()
+    et_model = ExtraTreesClassifier()
+
+    model_names = [
+        "Logistic Regression",
+        "Support Vector Machine",
+        "Random Forest",
+        "Extra Trees",
+    ]
+    models = [log_reg_model, svm_model, rf_model, et_model]
+    hyperparam_dicts = [log_reg_params, svc_params, rf_params, et_params]
+
+    model_dicts = []
+    for index in range(4):
+        model_dict = {}
+        model_dict["name"] = model_names[index]
+        model_dict["model"] = models[index]
+        model_dict["grid_search_dict"] = hyperparam_dicts[index]
+        model_dicts.append(model_dict)
+    return model_dicts
 
 
 @task
