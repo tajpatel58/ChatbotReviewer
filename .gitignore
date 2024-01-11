@@ -155,5 +155,5 @@ cython_debug/
 data/
 Exploration/mlruns
 
-.DS_Store
+**/.DS_Store
 /notebooks/mlruns
