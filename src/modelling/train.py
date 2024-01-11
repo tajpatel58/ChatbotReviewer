@@ -10,11 +10,8 @@ from sklearn.model_selection import train_test_split, cross_val_score, GridSearc
 
 
 @task(name="Configuring MlFlow")
-def configure_mlflow_task(project_home: Path) -> None:
-    experiment_tracking_path = (
-        project_home / "src" / "modelling" / "experiment_tracking"
-    )
-    mlflow.set_tracking_uri("sqlite:///" + str(experiment_tracking_path / "mlflow.db"))
+def configure_mlflow_task(tracking_uri_path: Path) -> None:
+    mlflow.set_tracking_uri("sqlite:///" + str(tracking_uri_path))
     return None
 
 
@@ -117,9 +114,9 @@ def training_models_flow(
     random_state: int,
     train_size: float,
     cv: int,
-    project_home: Path,
+    mlflow_tracking_uri: Path,
 ):
-    configure_mlflow_task(project_home)
+    configure_mlflow_task(mlflow_tracking_uri)
     X_train, X_test, y_train, y_test = split_data_task(X, y, train_size)
     model_dicts = initialise_model_dicts_task(random_state=random_state)
     for model_dict in model_dicts:
