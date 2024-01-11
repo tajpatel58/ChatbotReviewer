@@ -10,7 +10,9 @@ from src.modelling.train import training_models_flow
 def model_training_pipeline():
     project_home = Path("/Users/tajsmac/Documents/Sentiment-Analysis/")
     pickle_path = project_home / "src" / "pickles" / "preprocessing.pkl"
-    mlflow_uri_path = project_home / "modelling" / "experiment_tracking" / "mlflow.db"
+    mlflow_uri_path = (
+        project_home / "src" / "modelling" / "experiment_tracking" / "mlflow.db"
+    )
     json_reviews_path = project_home / "data" / "reviews.json"
     number_of_components = 40
     random_state = 42

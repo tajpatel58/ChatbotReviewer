@@ -11,7 +11,9 @@ from sklearn.model_selection import train_test_split, cross_val_score, GridSearc
 
 @task(name="Configuring MlFlow")
 def configure_mlflow_task(tracking_uri_path: Path) -> None:
-    mlflow.set_tracking_uri("sqlite:///" + str(tracking_uri_path))
+    tracking_path = "sqlite:///" + str(tracking_uri_path)
+    print(tracking_path)
+    mlflow.set_tracking_uri(tracking_path)
     return None
 
 
