@@ -14,6 +14,7 @@ def configure_mlflow_task(tracking_uri_path: Path) -> None:
     tracking_path = "sqlite:///" + str(tracking_uri_path)
     print(tracking_path)
     mlflow.set_tracking_uri(tracking_path)
+    mlflow.set_experiment("Chatbot Reviewer")
     return None
 
 
