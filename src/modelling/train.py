@@ -4,6 +4,7 @@ from pathlib import Path
 from prefect import task, flow
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import classification_report
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
@@ -98,12 +99,15 @@ def hyperparam_tune_and_train_task(
         cv_score = (
             cross_val_score(best_estimator, X_train, y_train, cv=cv).mean().round(3)
         )
-        predicted_test = best_estimator.predict(X_test)
-        accuracy = accuracy_score(y_true=y_test, y_pred=predicted_test).round(3)
+        y_pred = best_estimator.predict(X_test)
+        accuracy = accuracy_score(y_true=y_test, y_pred=y_pred).round(3)
+        report = classification_report(y_test, y_pred, output_dict=True)
+        positive_precision = report["1"]["precision"]
 
         # log metrics with mlflow:
         mlflow.log_metric(key="cross_val_score", value=cv_score)
         mlflow.log_metric(key="accuracy", value=accuracy)
+        mlflow.log_metric(key="precision", value=positive_precision)
         mlflow.log_param(key="grid_searched_params", value=model_grid_search_dict)
         mlflow.log_params(best_hyper_params)
         mlflow.sklearn.log_model(best_estimator, model_name)
