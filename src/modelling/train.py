@@ -6,6 +6,7 @@ from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import classification_report
 from sklearn.linear_model import LogisticRegression
+from src.modelling.model_params import ModelParams as Constants
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
 
@@ -15,7 +16,7 @@ def configure_mlflow_task(tracking_uri_path: Path) -> None:
     tracking_path = "sqlite:///" + str(tracking_uri_path)
     print(tracking_path)
     mlflow.set_tracking_uri(tracking_path)
-    mlflow.set_experiment("Chatbot Reviewer")
+    mlflow.set_experiment(Constants.EXPERIMENT_NAME)
     return None
 
 
@@ -114,6 +115,20 @@ def hyperparam_tune_and_train_task(
     return None
 
 
+@task(name="Registering Model")
+def register_best_model() -> None:
+    sorted_runs_df = mlflow.search_runs(
+        experiment_names=[Constants.EXPERIMENT_NAME]
+    ).sort_values(by="metrics.precision", ascending=False)
+    best_model_row = sorted_runs_df.iloc[0]
+    best_model_run_id = best_model_row["run_id"]
+    mlflow.register_model(
+    f"runs:/{best_model_run_id}", "chatbot_reviews_classifier",
+    tags={"deployment_intent" : "production"}
+)
+    return None
+
+
 @flow(validate_parameters=False, log_prints=True)
 def training_models_flow(
     X: np.ndarray,
@@ -131,4 +146,5 @@ def training_models_flow(
         hyperparam_tune_and_train_task.with_options(name=training_task_name)(
             X_train, X_test, y_train, y_test, model_info_dict=model_dict, cv=cv
         )
+    register_best_model()
     return None
