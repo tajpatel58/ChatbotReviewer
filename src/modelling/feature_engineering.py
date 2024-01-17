@@ -211,7 +211,6 @@ def feature_engineering_inference_flow(
     -----------
     cleaned_reviews_df (pd.DataFrame) : Dataframe with cleaned text data and a columns for labels.
     path_to_pickle (pathlib.Path) : Path of where to save preprocessing objects.
-    n_components (int) : Number of components to be used when fitting PCA.
 
     Returns:
     --------

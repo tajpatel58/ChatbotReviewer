@@ -8,7 +8,7 @@ from src.modelling.train import training_models_flow
 
 @flow
 def model_training_pipeline():
-    project_home = Path("/Users/tajsmac/Documents/Sentiment-Analysis/")
+    project_home = Path("/Users/taj/Documents/ChatbotReviewer/")
     pickle_path = project_home / "src" / "pickles" / "preprocessing.pkl"
     mlflow_uri_path = (
         project_home / "src" / "modelling" / "experiment_tracking" / "mlflow.db"
@@ -29,6 +29,7 @@ def model_training_pipeline():
         train_size=0.2,
         cv=3,
         mlflow_tracking_uri=mlflow_uri_path,
+        pickles_path=pickle_path,
     )
 
 
