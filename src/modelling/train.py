@@ -3,21 +3,13 @@ import numpy as np
 from pathlib import Path
 from prefect import task, flow
 from sklearn.svm import SVC
+from src.modelling import common
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import classification_report
 from sklearn.linear_model import LogisticRegression
 from src.modelling.model_params import ModelParams as Constants
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
-
-
-@task(name="Configuring MlFlow")
-def configure_mlflow_task(tracking_uri_path: Path) -> None:
-    tracking_path = "sqlite:///" + str(tracking_uri_path)
-    print(tracking_path)
-    mlflow.set_tracking_uri(tracking_path)
-    mlflow.set_experiment(Constants.EXPERIMENT_NAME)
-    return None
 
 
 @task(name="Initialising Hyperparam Search Info")
@@ -85,6 +77,7 @@ def hyperparam_tune_and_train_task(
     y_test: np.array,
     model_info_dict: dict,
     cv: int,
+    pickles_path: Path,
 ) -> None:
     model_name = model_info_dict["name"]
     model = model_info_dict["model"]
@@ -111,7 +104,8 @@ def hyperparam_tune_and_train_task(
         mlflow.log_metric(key="precision", value=positive_precision)
         mlflow.log_param(key="grid_searched_params", value=model_grid_search_dict)
         mlflow.log_params(best_hyper_params)
-        mlflow.sklearn.log_model(best_estimator, model_name)
+        mlflow.sklearn.log_model(best_estimator, "model")
+        mlflow.log_artifacts(pickles_path.parent, "preprocessing_pkls")
     return None
 
 
@@ -123,9 +117,10 @@ def register_best_model() -> None:
     best_model_row = sorted_runs_df.iloc[0]
     best_model_run_id = best_model_row["run_id"]
     mlflow.register_model(
-    f"runs:/{best_model_run_id}", "chatbot_reviews_classifier",
-    tags={"deployment_intent" : "production"}
-)
+        f"runs:/{best_model_run_id}",
+        Constants.MODEL_NAME,
+        tags={"deployment_intent": "production"},
+    )
     return None
 
 
@@ -137,14 +132,22 @@ def training_models_flow(
     train_size: float,
     cv: int,
     mlflow_tracking_uri: Path,
+    pickles_path: Path,
 ):
-    configure_mlflow_task(mlflow_tracking_uri)
+    common.configure_mlflow_task(mlflow_tracking_uri)
     X_train, X_test, y_train, y_test = split_data_task(X, y, train_size)
     model_dicts = initialise_model_dicts_task(random_state=random_state)
     for model_dict in model_dicts:
         training_task_name = f"Training Model: {model_dict['name']}"
         hyperparam_tune_and_train_task.with_options(name=training_task_name)(
-            X_train, X_test, y_train, y_test, model_info_dict=model_dict, cv=cv
+            X_train,
+            X_test,
+            y_train,
+            y_test,
+            model_info_dict=model_dict,
+            cv=cv,
+            pickles_path=pickles_path,
         )
+
     register_best_model()
     return None
