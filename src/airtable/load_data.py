@@ -3,9 +3,18 @@ import pandas as pd
 from pathlib import Path
 from pyairtable import Api
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from src.airtable.api_schemas import Review
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 def create_airtable_api(airtable_token_path: Path) -> Api:
@@ -29,7 +38,7 @@ def airtable_to_dataframe(
     return data_df
 
 
-@app.post("/add_reviews/")
+@app.post("/add_review/")
 def add_review_to_airtable(review: Review):
     # load airtable mapping dict:
     path_to_airtable_keys = "./airtable_key_mapping.json"
@@ -40,8 +49,11 @@ def add_review_to_airtable(review: Review):
 
     # create airtable table connections:
     base_id = airtable_ids_dict["base_id"]
-    reviews_table_id = airtable_ids_dict["classified_reviews_df"]
     to_classify_reviews_id = airtable_ids_dict["reviews_to_classify_df"]
     to_classify_reviews_df = api.table(base_id, to_classify_reviews_id)
-    reviews_table_df = api.table(base_id, reviews_table_id)
-    return review, to_classify_reviews_df, reviews_table_df
+    try:
+        to_classify_reviews_df.create(fields=review.dict())
+        return {"status": "success"}
+    except Exception as e:
+        print(e)
+        return {"status": "failed", "error_msg": print(e)}
