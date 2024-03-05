@@ -1,0 +1,3 @@
+[submodule "src/chatbot"]
+	path = src/chatbot
+	url = https://github.com/tajpatel58/Website-Chatbot.git
