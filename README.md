@@ -1,6 +1,6 @@
 # Sentiment Analysis Project using Prefect Pipelines
 
-<img src="./Graphics/sentiments.png" alt="drawing" width="200" height="200"/>
+<img src="./graphics/sentiments.png" alt="drawing" width="200" height="200"/>
 
 ## Table of Contents
 
