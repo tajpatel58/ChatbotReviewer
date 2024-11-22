@@ -1,4 +1,5 @@
 import json
+import uvicorn
 import pandas as pd
 from pathlib import Path
 from pyairtable import Api
@@ -41,11 +42,13 @@ def airtable_to_dataframe(
 @app.post("/add_review/")
 def add_review_to_airtable(review: Review):
     # load airtable mapping dict:
-    path_to_airtable_keys = "./airtable_key_mapping.json"
+    path_to_airtable_keys = (
+        Path(__file__).parent.resolve() / "airtable_key_mapping.json"
+    )
     airtable_ids_dict = load_airtable_mapping_dict(path_to_airtable_keys)
 
     # connect to airtable API:
-    api = create_airtable_api("./token.txt")
+    api = create_airtable_api(Path(__file__).parent.resolve() / "token.txt")
 
     # create airtable table connections:
     base_id = airtable_ids_dict["base_id"]
@@ -57,3 +60,7 @@ def add_review_to_airtable(review: Review):
     except Exception as e:
         print(e)
         return {"status": "failed", "error_msg": print(e)}
+
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
